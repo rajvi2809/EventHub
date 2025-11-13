@@ -19,7 +19,8 @@ const FeaturedEvents = () => {
         const response = await eventsAPI.getEvents({ 
           limit: 3, 
           sort: '-createdAt',
-          status: 'published'
+          status: 'published',
+          select: 'title,description,startDate,endDate,venue,category,ticketTypes,images' // Only fetch needed fields
         });
         console.log('Featured events response:', response.data);
         setEvents(response.data.events || []);
@@ -115,7 +116,18 @@ const FeaturedEvents = () => {
           {events.map((event) => (
             <div key={event._id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
               {/* Event Image */}
-              <div className="relative h-48 bg-gradient-to-r from-purple-500 to-pink-500">
+              <div className="relative h-48 bg-gradient-to-r from-purple-500 to-pink-500 overflow-hidden">
+                {event.images && event.images[0] && (
+                  <img
+                    src={event.images[0].url}
+                    alt={event.images[0].alt || event.title}
+                    className="w-full h-full object-cover transition-transform hover:scale-110"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://via.placeholder.com/400x200?text=No+Image';
+                    }}
+                  />
+                )}
                 <div className="absolute top-4 left-4">
                   <span className={`${getCategoryColor(event.category)} text-white px-3 py-1 rounded-full text-sm font-medium`}>
                     {event.category}
@@ -123,7 +135,7 @@ const FeaturedEvents = () => {
                 </div>
                 <div className="absolute top-4 right-4">
                   <span className="bg-gray-800 text-white px-3 py-1 rounded-full text-sm font-medium">
-                    ${event.ticketTypes?.[0]?.price || 0}
+                    ₹{event.ticketTypes?.[0]?.price || 0}
                   </span>
                 </div>
               </div>
@@ -156,7 +168,7 @@ const FeaturedEvents = () => {
                 {/* Attendees */}
                 <div className="flex items-center text-sm text-gray-500 mb-4">
                   <UserIcon className="h-4 w-4 mr-2" />
-                  {event.analytics?.views || 0} attending
+                  {event.totalTicketsSold || 0} attending
                 </div>
                 
                 {/* View Details Button */}
