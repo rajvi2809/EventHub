@@ -104,8 +104,12 @@ const bookingSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["credit_card", "debit_card", "paypal", "bank_transfer"],
+      enum: ["credit_card", "debit_card", "paypal", "bank_transfer", "razorpay"],
       required: [true, "Payment method is required"],
+    },
+    paymentOrder: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PaymentOrder",
     },
     paymentDetails: {
       transactionId: String,

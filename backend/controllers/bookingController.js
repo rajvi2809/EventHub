@@ -139,6 +139,7 @@ const getUserBookings = async (req, res) => {
 
     const bookings = await Booking.find(query)
       .populate("event", "title startDate endDate venue images")
+      .populate("paymentOrder", "razorpayOrderId razorpayPaymentId paymentStatus amount")
       .sort("-createdAt")
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -172,6 +173,7 @@ const getBooking = async (req, res) => {
     const booking = await Booking.findById(req.params.id).populate([
       { path: "user", select: "firstName lastName email" },
       { path: "event", select: "title startDate endDate venue organizer" },
+      { path: "paymentOrder", select: "razorpayOrderId razorpayPaymentId paymentStatus amount" },
     ])
 
     if (!booking) {
@@ -309,6 +311,7 @@ const getEventBookings = async (req, res) => {
 
     const bookings = await Booking.find(query)
       .populate("user", "firstName lastName email")
+      .populate("paymentOrder", "razorpayOrderId razorpayPaymentId paymentStatus amount")
       .sort("-createdAt")
       .limit(limit * 1)
       .skip((page - 1) * limit)

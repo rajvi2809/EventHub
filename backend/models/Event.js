@@ -188,17 +188,28 @@ const eventSchema = new mongoose.Schema(
 
 // Virtual for total tickets sold
 eventSchema.virtual("totalTicketsSold").get(function () {
-  return this.ticketTypes.reduce((total, ticket) => total + ticket.sold, 0)
+  const types = Array.isArray(this.ticketTypes) ? this.ticketTypes : [];
+  return types.reduce((total, ticket) => total + (Number(ticket?.sold) || 0), 0)
 })
 
 // Virtual for total revenue
 eventSchema.virtual("totalRevenue").get(function () {
-  return this.ticketTypes.reduce((total, ticket) => total + ticket.price * ticket.sold, 0)
+  const types = Array.isArray(this.ticketTypes) ? this.ticketTypes : [];
+  return types.reduce((total, ticket) => {
+    const price = Number(ticket?.price) || 0
+    const sold = Number(ticket?.sold) || 0
+    return total + price * sold
+  }, 0)
 })
 
 // Virtual for available tickets
 eventSchema.virtual("availableTickets").get(function () {
-  return this.ticketTypes.reduce((total, ticket) => total + (ticket.quantity - ticket.sold), 0)
+  const types = Array.isArray(this.ticketTypes) ? this.ticketTypes : [];
+  return types.reduce((total, ticket) => {
+    const quantity = Number(ticket?.quantity) || 0
+    const sold = Number(ticket?.sold) || 0
+    return total + Math.max(0, quantity - sold)
+  }, 0)
 })
 
 // Virtual for reviews
@@ -208,7 +219,6 @@ eventSchema.virtual("reviews", {
   foreignField: "event",
 })
 
-// Virtual for bookings
 eventSchema.virtual("bookings", {
   ref: "Booking",
   localField: "_id",

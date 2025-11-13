@@ -1,0 +1,334 @@
+{
+	"info": {
+		"_postman_id": "eventhub-payment-api",
+		"name": "EventHub Payment API",
+		"description": "Payment API collection for EventHub backend testing",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Authentication",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.token) {",
+									"        pm.environment.set(\"auth_token\", jsonData.token);",
+									"    } else if (jsonData.data && jsonData.data.token) {",
+									"        pm.environment.set(\"auth_token\", jsonData.data.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"your_password\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					}
+				},
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"9876543210\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Events",
+			"item": [
+				{
+					"name": "Create Event",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201 || pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.event && jsonData.event._id) {",
+									"        pm.environment.set(\"event_id\", jsonData.event._id);",
+									"        if (jsonData.event.ticketTypes && jsonData.event.ticketTypes.length > 0) {",
+									"            pm.environment.set(\"ticket_type_id\", jsonData.event.ticketTypes[0]._id);",
+									"        }",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Test Concert\",\n  \"description\": \"A test event for payment testing\",\n  \"category\": \"concert\",\n  \"startDate\": \"2024-12-31T18:00:00Z\",\n  \"endDate\": \"2024-12-31T22:00:00Z\",\n  \"venue\": {\n    \"type\": \"physical\",\n    \"name\": \"Test Venue\",\n    \"address\": {\n      \"street\": \"123 Test St\",\n      \"city\": \"Mumbai\",\n      \"state\": \"Maharashtra\",\n      \"country\": \"India\",\n      \"zipCode\": \"400001\"\n    }\n  },\n  \"ticketTypes\": [\n    {\n      \"name\": \"General Admission\",\n      \"price\": 500,\n      \"quantity\": 100,\n      \"saleEndDate\": \"2024-12-30T23:59:59Z\"\n    },\n    {\n      \"name\": \"VIP\",\n      \"price\": 1500,\n      \"quantity\": 50,\n      \"saleEndDate\": \"2024-12-30T23:59:59Z\"\n    }\n  ],\n  \"status\": \"published\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/events",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"events"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Event",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/events/{{event_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"events",
+								"{{event_id}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Payment",
+			"item": [
+				{
+					"name": "Create Payment Order",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.order && jsonData.order.id) {",
+									"        pm.environment.set(\"razorpay_order_id\", jsonData.order.id);",
+									"    }",
+									"    if (jsonData.booking && jsonData.booking._id) {",
+									"        pm.environment.set(\"booking_id\", jsonData.booking._id);",
+									"    }",
+									"    if (jsonData.paymentData && jsonData.paymentData._id) {",
+									"        pm.environment.set(\"payment_order_id\", jsonData.paymentData._id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"eventId\": \"{{event_id}}\",\n  \"items\": [\n    {\n      \"ticketTypeId\": \"{{ticket_type_id}}\",\n      \"quantity\": 2\n    }\n  ],\n  \"attendees\": [\n    {\n      \"firstName\": \"John\",\n      \"lastName\": \"Doe\",\n      \"email\": \"john.doe@example.com\",\n      \"phone\": \"9876543210\"\n    },\n    {\n      \"firstName\": \"Jane\",\n      \"lastName\": \"Doe\",\n      \"email\": \"jane.doe@example.com\",\n      \"phone\": \"9876543211\"\n    }\n  ],\n  \"billingAddress\": {\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"9876543210\",\n    \"address\": \"123 Main Street\",\n    \"city\": \"Mumbai\",\n    \"state\": \"Maharashtra\",\n    \"country\": \"India\",\n    \"zipCode\": \"400001\"\n  },\n  \"paymentMethod\": \"razorpay\",\n  \"specialRequests\": \"Please provide wheelchair access\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/payments/create-order",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"create-order"
+							]
+						}
+					}
+				},
+				{
+					"name": "Verify Payment",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Generate signature for testing",
+									"// Note: For actual testing, get these from Razorpay checkout",
+									"const orderId = pm.environment.get(\"razorpay_order_id\");",
+									"const paymentId = \"pay_test_\" + Date.now();",
+									"",
+									"// For actual testing, uncomment and use real values:",
+									"// const paymentId = pm.environment.get(\"razorpay_payment_id\");",
+									"",
+									"// Note: This signature won't work with Razorpay, but shows the format",
+									"// In real scenario, signature comes from Razorpay webhook/callback",
+									"",
+									"pm.environment.set(\"test_razorpay_payment_id\", paymentId);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"razorpay_payment_id\": \"{{test_razorpay_payment_id}}\",\n  \"razorpay_order_id\": \"{{razorpay_order_id}}\",\n  \"razorpay_signature\": \"generated_signature_here\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/payments/verify-payment",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"verify-payment"
+							]
+						},
+						"description": "⚠️ IMPORTANT: This requires actual Razorpay payment signature. For testing:\n1. Use Razorpay Checkout with the order_id from create-order\n2. Complete payment with test card: 4111 1111 1111 1111\n3. Get payment_id and signature from Razorpay callback\n4. Use those values in this request"
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Bookings",
+			"item": [
+				{
+					"name": "Get Booking",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/bookings/{{booking_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"bookings",
+								"{{booking_id}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get User Bookings",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/bookings",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"bookings"
+							]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000",
+			"type": "string"
+		}
+	]
+}
+
