@@ -1,4 +1,4 @@
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 
 const reviewSchema = new mongoose.Schema(
   {
@@ -83,16 +83,16 @@ const reviewSchema = new mongoose.Schema(
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
-  },
-)
+  }
+);
 
 // Compound index to ensure one review per user per event
-reviewSchema.index({ user: 1, event: 1 }, { unique: true })
+reviewSchema.index({ user: 1, event: 1 }, { unique: true });
 
 // Indexes for performance
-reviewSchema.index({ event: 1 })
-reviewSchema.index({ rating: 1 })
-reviewSchema.index({ createdAt: -1 })
-reviewSchema.index({ moderationStatus: 1 })
+reviewSchema.index({ event: 1 });
+reviewSchema.index({ rating: 1 });
+reviewSchema.index({ createdAt: -1 });
+reviewSchema.index({ moderationStatus: 1 });
 
-module.exports = mongoose.model("Review", reviewSchema)
+module.exports = mongoose.model("Review", reviewSchema);

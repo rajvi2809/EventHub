@@ -1,13 +1,31 @@
-const express = require("express")
-const router = express.Router()
+const express = require("express");
+const router = express.Router();
+const { auth, authorize } = require("../middleware/auth");
+const {
+  createReview,
+  getEventReviews,
+  getUserReviews,
+  updateReview,
+  deleteReview,
+  voteReview,
+  reportReview,
+  moderateReview,
+  getPendingReviews,
+} = require("../controllers/reviewController");
 
-// Placeholder routes - will be implemented in later tasks
-router.get("/:eventId", (req, res) => {
-  res.json({ message: "Get reviews endpoint - to be implemented" })
-})
+// Public routes
+router.get("/event/:eventId", getEventReviews);
+router.get("/user/:userId", getUserReviews);
 
-router.post("/", (req, res) => {
-  res.json({ message: "Create review endpoint - to be implemented" })
-})
+// Protected routes (require authentication)
+router.post("/", auth, createReview);
+router.put("/:reviewId", auth, updateReview);
+router.delete("/:reviewId", auth, deleteReview);
+router.post("/:reviewId/vote", auth, voteReview);
+router.post("/:reviewId/report", auth, reportReview);
 
-module.exports = router
+// Admin only routes
+router.get("/admin/pending", auth, authorize("admin"), getPendingReviews);
+router.put("/:reviewId/moderate", auth, authorize("admin"), moderateReview);
+
+module.exports = router;
