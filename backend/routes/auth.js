@@ -1,5 +1,5 @@
-const express = require("express");
-const router = express.Router();
+const express = require("express")
+const router = express.Router()
 const {
   register,
   login,
@@ -12,32 +12,37 @@ const {
   verifyEmail,
   verifyOTP,
   resendOTP,
-} = require("../controllers/authController");
-const { auth } = require("../middleware/auth");
+  // Admin handlers
+  getAllUsers,
+  getUser,
+  updateUser,
+  deleteUser,
+} = require("../controllers/authController")
+const { auth } = require("../middleware/auth")
 const {
   registerValidation,
   loginValidation,
   changePasswordValidation,
   profileUpdateValidation,
   validate,
-} = require("../middleware/validation");
+} = require("../middleware/validation")
 
-router.post("/register", registerValidation, validate, register);
-router.post("/login", loginValidation, validate, login);
-router.post("/logout", auth, logout);
-router.get("/me", auth, getMe);
-router.put("/profile", auth, profileUpdateValidation, validate, updateProfile);
-router.put(
-  "/change-password",
-  auth,
-  changePasswordValidation,
-  validate,
-  changePassword
-);
-router.post("/forgot-password", forgotPassword);
-router.put("/reset-password/:resettoken", resetPassword);
-router.get("/verify/:token", verifyEmail);
-router.post("/verify-otp", verifyOTP);
-router.post("/resend-otp", resendOTP);
+router.post("/register", registerValidation, validate, register)
+router.post("/login", loginValidation, validate, login)
+router.post("/logout", auth, logout)
+router.get("/me", auth, getMe)
+router.put("/profile", auth, profileUpdateValidation, validate, updateProfile)
+router.put("/change-password", auth, changePasswordValidation, validate, changePassword)
+router.post("/forgot-password", forgotPassword)
+router.put("/reset-password/:resettoken", resetPassword)
+router.get("/verify/:token", verifyEmail)
+router.post("/verify-otp", verifyOTP)
+router.post("/resend-otp", resendOTP)
 
-module.exports = router;
+// Admin routes
+router.get("/users", auth, getAllUsers)
+router.get("/users/:id", auth, getUser)
+router.put("/users/:id", auth, updateUser)
+router.delete("/users/:id", auth, deleteUser)
+
+module.exports = router
