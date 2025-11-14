@@ -3,6 +3,35 @@
   min-height: 100vh;
 }
 
+/* Global dark mode base */
+html.dark body {
+  background-color: #0f172a; /* slate-900 */
+  color: #e5e7eb; /* gray-200 */
+}
+html.dark .bg-white {
+  background-color: #111827 !important; /* gray-900 */
+}
+html.dark .text-gray-900 {
+  color: #e5e7eb !important;
+}
+html.dark .text-gray-800 {
+  color: #e5e7eb !important;
+}
+html.dark .text-gray-700 {
+  color: #d1d5db !important; /* gray-300 */
+}
+html.dark .text-gray-600 {
+  color: #cbd5e1 !important; /* slate-300 */
+}
+html.dark .border-gray-200 {
+  border-color: #374151 !important;
+}
+
+/* Ensure cards with white backgrounds invert in dark mode */
+html.dark .shadow-md, html.dark .shadow-lg, html.dark .rounded-lg, html.dark .rounded-2xl {
+  background-color: #111827; /* gray-900 */
+}
+
 /* Utility classes */
 .line-clamp-2 {
   display: -webkit-box;
