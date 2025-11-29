@@ -1,0 +1,66 @@
+{
+  "users": [
+    {
+      "firstName": "John",
+      "lastName": "Organizer",
+      "email": "organizer@test.com",
+      "role": "organizer",
+      "phone": "9876543210",
+      "isVerified": true,
+      "isActive": true
+    },
+    {
+      "firstName": "Jane",
+      "lastName": "Attendee",
+      "email": "attendee@test.com",
+      "role": "attendee",
+      "phone": "9876543211",
+      "isVerified": true,
+      "isActive": true
+    }
+  ],
+  "events": [
+    {
+      "title": "Tech Conference 2024",
+      "category": "conference",
+      "startDate": "<FUTURE_DATE>",
+      "venue": { "type": "physical", "city": "Mumbai" },
+      "ticketTypes": [ { "name": "Basic Pass", "price": 2999, "quantity": 100 } ]
+    },
+    {
+      "title": "Web Development Workshop",
+      "category": "workshop",
+      "startDate": "<FUTURE_DATE>",
+      "venue": { "type": "online", "platform": "Zoom" },
+      "ticketTypes": [ { "name": "Workshop Access", "price": 1999, "quantity": 300 } ]
+    }
+  ],
+  "bookings": [
+    {
+      "bookingNumber": "BKG-0001",
+      "userEmail": "attendee@test.com",
+      "eventTitle": "Tech Conference 2024",
+      "items": [ { "ticketTypeName": "Basic Pass", "price": 2999, "quantity": 2 } ],
+      "totalAmount": 5998,
+      "status": "confirmed",
+      "paymentStatus": "completed"
+    }
+  ],
+  "reviews": [
+    {
+      "userEmail": "attendee@test.com",
+      "eventTitle": "Past Music Festival",
+      "rating": 5,
+      "title": "Amazing event!",
+      "comment": "The festival was well-organized"
+    }
+  ],
+  "paymentOrders": [
+    {
+      "userEmail": "attendee@test.com",
+      "eventTitle": "Tech Conference 2024",
+      "amount": 6180.44,
+      "paymentStatus": "Paid"
+    }
+  ]
+}
