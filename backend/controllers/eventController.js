@@ -1,5 +1,6 @@
 const Event = require("../models/Event");
 const Booking = require("../models/Booking");
+const User = require("../models/User");
 // const { getRedisClient } = require("../config/redis")
 
 // Get all events with filtering, sorting, and pagination
@@ -129,6 +130,56 @@ const getEvent = async (req, res) => {
     // Add computed fields
     const eobj = event.toObject();
     const types = Array.isArray(eobj.ticketTypes) ? eobj.ticketTypes : [];
+    // Reconcile sold counts from Booking records to ensure counts reflect confirmed bookings
+    try {
+      // Aggregate bookings for this event that are confirmed / completed payments
+      const bookings = await Booking.find({ event: event._id, status: 'confirmed' }).lean();
+
+      // Build sold map per ticketType id
+      const soldMap = {};
+      for (const b of bookings) {
+        if (!Array.isArray(b.items)) continue;
+        for (const it of b.items) {
+          const ttId = String(it.ticketType);
+          const qty = Number(it.quantity) || 0;
+          soldMap[ttId] = (soldMap[ttId] || 0) + qty;
+        }
+      }
+
+      // Create a copy of types and override sold values with aggregated numbers when available
+      const reconciledTypes = types.map((t) => {
+        const tCopy = { ...t };
+        const id = String(tCopy._id || tCopy.id);
+        if (soldMap[id] !== undefined) {
+          tCopy.sold = soldMap[id];
+        }
+        // ensure sold is numeric
+        tCopy.sold = Number(tCopy.sold) || 0;
+        return tCopy;
+      });
+
+      const totalTicketsSold = reconciledTypes.reduce((sum, ticket) => sum + (Number(ticket?.sold) || 0), 0);
+      const availableTickets = reconciledTypes.reduce((sum, ticket) => sum + Math.max(0, (Number(ticket?.quantity) || 0) - (Number(ticket?.sold) || 0)), 0);
+      const totalRevenue = reconciledTypes.reduce((sum, ticket) => sum + (Number(ticket?.price) || 0) * (Number(ticket?.sold) || 0), 0);
+
+      const eventWithDetails = {
+        ...eobj,
+        ticketTypes: reconciledTypes,
+        totalTicketsSold,
+        availableTickets,
+        totalRevenue,
+      };
+
+      res.status(200).json({
+        success: true,
+        event: eventWithDetails,
+      });
+      return;
+    } catch (reconErr) {
+      console.error('Failed to reconcile booking counts for event:', reconErr);
+      // fallback to using stored ticketTypes.sold values
+    }
+
     const eventWithDetails = {
       ...eobj,
       totalTicketsSold: types.reduce((sum, ticket) => sum + (Number(ticket?.sold) || 0), 0),
@@ -235,10 +286,32 @@ const updateEvent = async (req, res) => {
       }
     }
 
+    const oldEvent = { ...event.toObject() };
     event = await Event.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
     }).populate("organizer", "firstName lastName avatar");
+
+    // Notify attendees if event details changed
+    try {
+      const bookings = await Booking.find({ 
+        event: req.params.id, 
+        status: "confirmed" 
+      }).populate("user", "email");
+
+      // Check if important details changed
+      const importantChanges = [];
+      if (req.body.startDate && oldEvent.startDate.toString() !== new Date(req.body.startDate).toString()) {
+        importantChanges.push("Start date");
+      }
+      if (req.body.venue && JSON.stringify(oldEvent.venue) !== JSON.stringify(req.body.venue)) {
+        importantChanges.push("Venue");
+      }
+
+      // Future: Send email notifications to attendees about important changes
+    } catch (error) {
+      console.error("Error checking event bookings:", error);
+    }
 
     res.status(200).json({
       success: true,

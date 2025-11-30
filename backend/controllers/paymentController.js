@@ -181,10 +181,31 @@ exports.verifyPayment = async (req, res) => {
             };
             await booking.save();
 
+            // Update event ticket counts based on booking items
+            try {
+                const event = await Event.findById(booking.event);
+                if (event) {
+                    let totalAdded = 0;
+                    for (const item of booking.items) {
+                        const ticketType = event.ticketTypes.id(item.ticketType);
+                        if (ticketType) {
+                            // ensure we don't exceed capacity
+                            const addQty = Number(item.quantity) || 0;
+                            ticketType.sold = (Number(ticketType.sold) || 0) + addQty;
+                            totalAdded += addQty;
+                        }
+                    }
+                    // Save event changes
+                    await event.save();
+                }
+            } catch (e) {
+                console.error('Failed to update event ticket counts after payment:', e);
+            }
+
             return res.json({
                 success: true,
                 message: "Payment Verified Successfully",
-                paid_amount_rupees: payment.amount,     // ✅ clear
+                paid_amount_rupees: payment.amount,
                 paymentOrder: payment._id,
                 booking: {
                     _id: booking._id,

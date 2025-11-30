@@ -9,8 +9,6 @@ import {
   ClockIcon,
   MapPinIcon,
   UserIcon,
-  ShareIcon,
-  HeartIcon,
   ArrowLeftIcon
 } from '@heroicons/react/24/outline';
 
@@ -200,14 +198,7 @@ const EventDetails = () => {
                   {event.category}
                 </span>
               </div>
-              <div className="absolute top-4 right-4 flex space-x-2">
-                <button className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-colors">
-                  <ShareIcon className="h-5 w-5 text-white" />
-                </button>
-                <button className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-colors">
-                  <HeartIcon className="h-5 w-5 text-white" />
-                </button>
-              </div>
+              {/* Removed share and like buttons for a cleaner UI */}
             </div>
 
             {/* Event Title */}
@@ -444,7 +435,7 @@ const EventDetails = () => {
                             <p className="text-sm text-gray-600">{ticketType.description}</p>
                           </div>
                           <div className="text-right">
-                            <div className="text-lg font-bold text-gray-900">₹{ticketType.price}</div>
+                            <div className="text-lg font-bold text-gray-900">₹{(Number(ticketType.price) || 0).toFixed(2)}</div>
                             <div className="text-sm text-gray-500">{ticketType.quantity - ticketType.sold} left</div>
                           </div>
                         </div>
@@ -480,7 +471,7 @@ const EventDetails = () => {
                   <div className="border-t pt-4 mb-6">
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-medium text-gray-900">Total:</span>
-                      <span className="text-xl font-bold text-gray-900">₹{selectedTicketType ? (event.ticketTypes?.find(t => t._id === selectedTicketType)?.price || 0) * ticketQuantity : 0}</span>
+                      <span className="text-xl font-bold text-gray-900">₹{(selectedTicketType ? ((event.ticketTypes?.find(t => t._id === selectedTicketType)?.price || 0) * ticketQuantity) : 0).toFixed(2)}</span>
                     </div>
                   </div>
 

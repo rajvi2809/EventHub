@@ -256,9 +256,9 @@ const Events = () => {
                       {event.category}
                     </span>
                   </div>
-                  <div className="absolute top-4 right-4 flex gap-2">
+                  <div className="absolute top-4 right-4">
                     <span className={`${getPriceColor(event.ticketTypes?.[0]?.price || 0)} text-white px-3 py-1 rounded-full text-sm font-medium`}>
-                      {event.ticketTypes?.[0]?.price === 0 ? 'Free' : `₹${event.ticketTypes?.[0]?.price || 0}`}
+                      {event.ticketTypes?.[0]?.price === 0 ? 'Free' : `₹${(Number(event.ticketTypes?.[0]?.price) || 0).toFixed(2)}`}
                     </span>
                   </div>
                 </div>
@@ -288,11 +288,7 @@ const Events = () => {
                     </div>
                   </div>
                   
-                  {/* Attendees */}
-                  <div className="flex items-center text-sm text-gray-500 mb-4">
-                    <UserIcon className="h-4 w-4 mr-2" />
-                    {event.totalTicketsSold || 0} attending
-                  </div>
+                  {/* Attendees removed from event card; shown on event details only */}
                   
                   {/* View Details Button */}
                   <Link

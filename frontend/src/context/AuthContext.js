@@ -134,13 +134,23 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.register(userData);
       return { success: true, data: response.data };
     } catch (error) {
-      // Log full server response to help diagnose 400 errors in deployed environment
-      console.error('AuthContext.register error response:', error.response);
+      // Log the full error to help diagnose network/timeouts/400s in deployed environment
+      console.error('AuthContext.register full error:', error);
+
+      // If normalized network error was thrown by the API layer, it may not have `response`
+      const serverData = error?.response?.data || error?.data || null;
+      const status = error?.response?.status || error?.status || null;
+      const message =
+        (serverData && serverData.message) ||
+        error?.message ||
+        'Registration failed';
+
       return {
         success: false,
-        message: error.response?.data?.message || 'Registration failed',
-        error: error.response?.data || null,
-        status: error.response?.status || null,
+        message,
+        error: serverData,
+        status,
+        raw: error,
       };
     }
   };

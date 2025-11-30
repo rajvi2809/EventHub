@@ -121,14 +121,14 @@ const Register = () => {
       } else {
         console.error('Registration failed response:', result);
         setError(result.message || 'Registration failed');
-        // Capture detailed server error payload if present
-        setServerErrorDetails(result.error || null);
+        // Capture detailed server error payload if present (including normalized/raw errors)
+        setServerErrorDetails(result.error || result.raw || null);
       }
     } catch (err) {
       console.error('Registration error thrown:', err);
       const serverData = err?.response?.data || null;
       setError(serverData?.message || 'Registration failed. Please try again.');
-      setServerErrorDetails(serverData);
+      setServerErrorDetails(serverData || err || null);
     }
     
     setLoading(false);
@@ -390,16 +390,7 @@ const Register = () => {
               </div>
 
               {/* Terms and Privacy Policy */}
-              <div className="text-sm text-gray-600">
-                By signing up, you agree to our{' '}
-                <Link to="/terms" className="text-blue-600 hover:text-blue-500">
-                  Terms of Service
-                </Link>{' '}
-                and{' '}
-                <Link to="/privacy" className="text-blue-600 hover:text-blue-500">
-                  Privacy Policy
-                </Link>
-              </div>
+              {/* Terms and Privacy links removed to reduce friction on registration */}
 
               {/* Create Account Button */}
               <button

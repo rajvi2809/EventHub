@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api, { clearCacheByPattern } from '../services/api';
+import api, { clearCacheByPattern, eventsAPI } from '../services/api';
 
 const PaymentPage = () => {
   const location = useLocation();
@@ -26,11 +26,17 @@ const PaymentPage = () => {
     const ticketPrice = eventDetails?.ticketPrice || 0;
     const quantity = selectedTickets || 1;
     const subtotal = ticketPrice * quantity;
-    const serviceFee = Math.round(subtotal * 0.10); // 10% service fee
+    const serviceFee = +(subtotal * 0.10); // 10% service fee
+    const totalRaw = subtotal + serviceFee;
+    // Keep numeric values but round to 2 decimals for display and calculation
+    const subtotalRound = Math.round((subtotal + Number.EPSILON) * 100) / 100;
+    const serviceFeeRound = Math.round((serviceFee + Number.EPSILON) * 100) / 100;
+    const total = Math.round((totalRaw + Number.EPSILON) * 100) / 100;
+
     return {
-      subtotal,
-      serviceFee,
-      total: subtotal + serviceFee
+      subtotal: subtotalRound,
+      serviceFee: serviceFeeRound,
+      total
     };
   };
 
@@ -124,6 +130,28 @@ const PaymentPage = () => {
                     localStorage.removeItem('eventsList');
                     localStorage.removeItem('event');
                   } catch (e) { /* ignore */ }
+
+                  // Fetch latest event from backend and store in localStorage so UI shows updated counts
+                  try {
+                    const freshEventRes = await eventsAPI.getEvent(eventDetails._id);
+                    const freshEvent = freshEventRes.data.event || null;
+                    if (freshEvent) {
+                      try { localStorage.setItem('event', JSON.stringify(freshEvent)); } catch(e) {}
+                    }
+                    // Also refresh events list cache so event lists show updated attending counts
+                    try {
+                      const eventsRes = await eventsAPI.getEvents({ limit: 20 });
+                      const eventData = {
+                        events: eventsRes.data.events || eventsRes.data || [],
+                        total: eventsRes.data.total || (eventsRes.data.events ? eventsRes.data.events.length : 0)
+                      };
+                      try { localStorage.setItem('eventsList', JSON.stringify(eventData)); } catch (e) {}
+                    } catch (e) {
+                      // ignore
+                    }
+                  } catch (e) {
+                    // ignore fetch error
+                  }
 
               navigate('/booking-confirmation', {
                 state: {
