@@ -37,12 +37,22 @@ const Events = () => {
         const cachedEvents = localStorage.getItem('eventsList');
         
         if (cachedCategories) {
-          setCategories(JSON.parse(cachedCategories));
+          try {
+            setCategories(JSON.parse(cachedCategories));
+          } catch (e) {
+            console.warn('Invalid cached categories, clearing cache', e);
+            try { localStorage.removeItem('eventCategories'); } catch (err) {}
+          }
         }
         if (cachedEvents) {
-          const parsedEvents = JSON.parse(cachedEvents);
-          setEvents(parsedEvents.events || []);
-          setTotalEvents(parsedEvents.total || parsedEvents.events.length);
+          try {
+            const parsedEvents = JSON.parse(cachedEvents);
+            setEvents(parsedEvents.events || []);
+            setTotalEvents(parsedEvents.total || (parsedEvents.events ? parsedEvents.events.length : 0));
+          } catch (e) {
+            console.warn('Invalid cached events, clearing eventsList', e);
+            try { localStorage.removeItem('eventsList'); } catch (err) {}
+          }
         }
 
         // Fetch fresh data

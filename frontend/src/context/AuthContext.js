@@ -134,9 +134,13 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.register(userData);
       return { success: true, data: response.data };
     } catch (error) {
+      // Log full server response to help diagnose 400 errors in deployed environment
+      console.error('AuthContext.register error response:', error.response);
       return {
         success: false,
         message: error.response?.data?.message || 'Registration failed',
+        error: error.response?.data || null,
+        status: error.response?.status || null,
       };
     }
   };
