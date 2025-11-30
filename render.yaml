@@ -2,10 +2,8 @@ services:
   - type: web
     name: eventhub-backend
     env: docker
-    repo: https://github.com/rajvi2809/EventHub.git
-    branch: main
-    rootDir: backend
-    dockerfilePath: backend/Dockerfile
+    rootDir: backend           # Render will cd into /backend
+    dockerfilePath: Dockerfile # path is relative to rootDir now
     plan: free
     autoDeploy: true
 
@@ -36,4 +34,7 @@ services:
       - key: RAZORPAY_KEY_ID
         sync: false
       - key: RAZORPAY_KEY_SECRET
+        sync: false
+
+      - key: REDIS_URL
         sync: false
