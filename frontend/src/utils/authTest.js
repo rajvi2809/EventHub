@@ -3,7 +3,7 @@
 
 export const testAuthFlow = async () => {
   // Use REACT_APP_API_URL (CRA build-time) or fall back to same-origin `/api`.
-  const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
   
   console.log('🧪 Testing EventHub Authentication Flow...');
   
