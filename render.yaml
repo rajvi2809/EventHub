@@ -2,7 +2,7 @@ services:
   - type: web
     name: eventhub-backend
     env: docker
-    repo: https://your-repo-url
+    repo: https://github.com/rajvi2809/EventHub.git
     branch: main
     rootDir: backend
     dockerfilePath: backend/Dockerfile
