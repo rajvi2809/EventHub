@@ -14,6 +14,7 @@ const userRoutes = require("./routes/users");
 const bookingRoutes = require("./routes/bookings");
 const reviewRoutes = require("./routes/reviews");
 const paymentRoutes = require("./routes/paymentRoutes");
+const notificationRoutes = require("./routes/notifications");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -33,8 +34,8 @@ app.use(
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // limit each IP to 100 requests per windowMs
+  windowMs: 30 * 60 * 1000, // 15 minutes
+  max: 500, // limit each IP to 500 requests per windowMs
 });
 app.use(limiter);
 
@@ -49,6 +50,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
