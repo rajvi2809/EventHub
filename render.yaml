@@ -1,5 +1,5 @@
 services:
-  - type: web_service
+  - type: web
     name: eventhub-backend
     env: docker
     repo: https://your-repo-url
