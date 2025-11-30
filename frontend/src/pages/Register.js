@@ -599,14 +599,19 @@ const Register = () => {
     }
 
     try {
-      const result = await register({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
+      const payload = {
+        firstName: (formData.firstName || '').trim(),
+        lastName: (formData.lastName || '').trim(),
+        email: (formData.email || '').trim().toLowerCase(),
         password: formData.password,
-        phone: formData.phone,
+        phone: (formData.phone || '').trim(),
         role: formData.role,
-      });
+      };
+
+      // Debug: log payload before sending
+      console.log('Register payload:', payload);
+
+      const result = await register(payload);
 
       if (result.success) {
         // Capture both email and userId in case backend expects userId for OTP verification
@@ -617,10 +622,16 @@ const Register = () => {
         setStep(2);
         setSuccess('Registration successful! Please check your email for the OTP.');
       } else {
-        setError(result.message);
+        console.error('Registration failed response:', result);
+        setError(result.message || 'Registration failed');
+        // Capture detailed server error payload if present
+        setServerErrorDetails(result.error || null);
       }
     } catch (err) {
-      setError('Registration failed. Please try again.');
+      console.error('Registration error thrown:', err);
+      const serverData = err?.response?.data || null;
+      setError(serverData?.message || 'Registration failed. Please try again.');
+      setServerErrorDetails(serverData);
     }
     
     setLoading(false);
@@ -720,10 +731,16 @@ const Register = () => {
           </div>
 
           {step === 1 ? (
-            <form onSubmit={handleRegister} className="space-y-6">
+            <form onSubmit={handleRegister} className="space-y-6" autoComplete="off">
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                   {error}
+                </div>
+              )}
+              {serverErrorDetails && (
+                <div className="mt-2 text-xs text-red-600 bg-red-50 border border-red-100 rounded p-2 break-words">
+                  <strong>Details:</strong>
+                  <pre className="whitespace-pre-wrap text-xs mt-1">{JSON.stringify(serverErrorDetails, null, 2)}</pre>
                 </div>
               )}
 
@@ -737,9 +754,10 @@ const Register = () => {
                     id="firstName"
                     name="firstName"
                     type="text"
+                    autoComplete="given-name"
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="John"
+                    
                     value={formData.firstName}
                     onChange={handleChange}
                   />
@@ -752,9 +770,10 @@ const Register = () => {
                     id="lastName"
                     name="lastName"
                     type="text"
+                    autoComplete="family-name"
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="Doe"
+                    
                     value={formData.lastName}
                     onChange={handleChange}
                   />
@@ -773,7 +792,7 @@ const Register = () => {
                   autoComplete="email"
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="your@email.com"
+                  
                   value={formData.email}
                   onChange={handleChange}
                 />
@@ -788,8 +807,9 @@ const Register = () => {
                   id="phone"
                   name="phone"
                   type="tel"
+                  autoComplete="tel"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="+1 (555) 123-4567"
+                  
                   value={formData.phone}
                   onChange={handleChange}
                 />
@@ -821,9 +841,10 @@ const Register = () => {
                   id="password"
                   name="password"
                   type="password"
+                  autoComplete="new-password"
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Enter your password"
+                  
                   value={formData.password}
                   onChange={handleChange}
                 />
@@ -859,9 +880,10 @@ const Register = () => {
                   id="confirmPassword"
                   name="confirmPassword"
                   type="password"
+                  autoComplete="new-password"
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Confirm your password"
+                  
                   value={formData.confirmPassword}
                   onChange={handleChange}
                 />
@@ -930,7 +952,7 @@ const Register = () => {
                     maxLength="6"
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-center text-lg tracking-widest"
-                    placeholder="000000"
+                    
                     value={otpData.otp}
                     onChange={handleOtpChange}
                   />
