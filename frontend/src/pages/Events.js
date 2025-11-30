@@ -9,8 +9,21 @@ import {
   CalendarIcon,
   ClockIcon,
   MapPinIcon,
-  UserIcon
+  
 } from '@heroicons/react/24/outline';
+
+  // Helper to format venue display without repeating city when venue name already contains it
+  const formatVenue = (venue) => {
+    if (!venue) return '';
+    const name = (venue.name || '').trim();
+    const city = (venue.address?.city || '').trim();
+    if (!name) return city || '';
+    if (!city) return name;
+    const lname = name.toLowerCase();
+    const lcity = city.toLowerCase();
+    if (lname.includes(lcity) || lcity.includes(lname)) return name;
+    return `${name}, ${city}`;
+  };
 
 const Events = () => {
   const { isAuthenticated, user } = useAuth();
@@ -61,20 +74,32 @@ const Events = () => {
         setCategories(categories);
         localStorage.setItem('eventCategories', JSON.stringify(categories));
 
-        // Fetch events
-        const params = {
-          limit: 20
-        };
-        
+        // Fetch events (apply category if present)
+        const params = { limit: 20 };
         const categoryToUse = categoryParam || selectedCategory;
-        if (categoryToUse !== 'all') {
-          params.category = categoryToUse;
-        }
+        if (categoryToUse !== 'all') params.category = categoryToUse;
 
         const eventsResponse = await eventsAPI.getEvents(params);
+        let fetchedEvents = eventsResponse.data.events || eventsResponse.data || [];
+
+        // Apply client-side price filter if one is selected (backend does not support price range yet)
+        const priceMatch = (ev, priceKey) => {
+          const evMin = Number(ev.minPrice || 0);
+          const evMax = Number(ev.maxPrice || 0);
+          if (priceKey === 'free') return evMin === 0 && evMax === 0;
+          if (priceKey === '0-50') return evMin <= 50 && evMax >= 0 && evMin <= 50;
+          if (priceKey === '50-100') return !(evMax < 50 || evMin > 100) && (evMin <= 100 && evMax >= 50);
+          if (priceKey === '100+') return evMax >= 100;
+          return true;
+        };
+
+        if (selectedPrice && selectedPrice !== 'all') {
+          fetchedEvents = fetchedEvents.filter((ev) => priceMatch(ev, selectedPrice));
+        }
+
         const eventData = {
-          events: eventsResponse.data.events || eventsResponse.data || [],
-          total: eventsResponse.data.total || (eventsResponse.data.events ? eventsResponse.data.events.length : 0)
+          events: fetchedEvents,
+          total: fetchedEvents.length || (eventsResponse.data.total || 0),
         };
         setEvents(eventData.events);
         setTotalEvents(eventData.total);
@@ -89,23 +114,53 @@ const Events = () => {
     };
 
     fetchData();
-  }, [selectedCategory, isAuthenticated, user]);
+  }, [selectedCategory, selectedPrice, isAuthenticated, user]);
 
-  const handleSearch = async () => {
-    if (!searchTerm.trim()) return;
-    
+  // Apply filters (category, price, search) and update events list
+  const applyFilters = async (opts = {}) => {
+    const q = opts.q !== undefined ? opts.q : searchTerm;
     setLoading(true);
     try {
-      const response = await eventsAPI.searchEvents({ q: searchTerm });
-      setEvents(response.data.events);
-      setTotalEvents(response.data.total);
+      const params = { limit: 20 };
+      if (selectedCategory && selectedCategory !== 'all') params.category = selectedCategory;
+      if (q && q.trim()) params.search = q.trim();
+
+      const response = await eventsAPI.getEvents(params);
+      let fetched = response.data.events || response.data || [];
+
+      const priceMatch = (ev, priceKey) => {
+        const evMin = Number(ev.minPrice || 0);
+        const evMax = Number(ev.maxPrice || 0);
+        if (priceKey === 'free') return evMin === 0 && evMax === 0;
+        if (priceKey === '0-50') return evMin <= 50 && evMax >= 0 && evMin <= 50;
+        if (priceKey === '50-100') return !(evMax < 50 || evMin > 100) && (evMin <= 100 && evMax >= 50);
+        if (priceKey === '100+') return evMax >= 100;
+        return true;
+      };
+
+      if (selectedPrice && selectedPrice !== 'all') {
+        fetched = fetched.filter((ev) => priceMatch(ev, selectedPrice));
+      }
+
+      const eventData = {
+        events: fetched,
+        total: fetched.length || (response.data.total || 0),
+      };
+      setEvents(eventData.events);
+      setTotalEvents(eventData.total);
+      try { localStorage.setItem('eventsList', JSON.stringify(eventData)); } catch (e) {}
     } catch (error) {
-      console.error('Search error:', error);
+      console.error('Filter apply error:', error);
       setEvents([]);
       setTotalEvents(0);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) return;
+    applyFilters({ q: searchTerm });
   };
 
   const formatDate = (dateString) => {
@@ -197,14 +252,14 @@ const Events = () => {
               >
                 <option value="all">All Prices</option>
                 <option value="free">Free</option>
-                <option value="0-50">$0 - $50</option>
-                <option value="50-100">$50 - $100</option>
-                <option value="100+">$100+</option>
+                <option value="0-50">₹0 - ₹50</option>
+                <option value="50-100">₹50 - ₹100</option>
+                <option value="100+">₹100+</option>
               </select>
             </div>
 
             {/* Filter Button */}
-            <button className="px-6 py-3 bg-gray-100 hover:bg-gray-200 hover:scale-105 text-gray-700 rounded-lg transition-all duration-300 flex items-center gap-2 shadow-sm hover:shadow-md">
+            <button onClick={() => applyFilters()} className="px-6 py-3 bg-gray-100 hover:bg-gray-200 hover:scale-105 text-gray-700 rounded-lg transition-all duration-300 flex items-center gap-2 shadow-sm hover:shadow-md">
               <FunnelIcon className="h-5 w-5" />
               <span className="hidden sm:inline">Filters</span>
             </button>
@@ -282,9 +337,9 @@ const Events = () => {
                       <ClockIcon className="h-4 w-4 mr-2" />
                       {formatTime(event.startDate)} - {formatTime(event.endDate)}
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
+                      <div className="flex items-center text-sm text-gray-600">
                       <MapPinIcon className="h-4 w-4 mr-2" />
-                      {event.venue?.name}, {event.venue?.address?.city}
+                      {formatVenue(event.venue)}
                     </div>
                   </div>
                   
