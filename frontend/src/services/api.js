@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-// Use REACT_APP_API_URL (CRA build-time) or fall back to same-origin `/api` for same-origin deployments
-const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL';
 
 // Create axios instance
 const api = axios.create({

@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: eventhub-backend
+    env: docker
+    rootDir: backend           # Render will cd into /backend
+    dockerfilePath: Dockerfile # path is relative to rootDir now
+    plan: free
+    autoDeploy: true
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      - key: PORT
+        value: 5000
+
+      - key: MONGODB_URI
+        sync: false
+
+      - key: JWT_SECRET
+        sync: false
+
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+
+      - key: REDIS_URL
+        sync: false
