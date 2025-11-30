@@ -5,8 +5,21 @@ import {
   CalendarIcon, 
   ClockIcon, 
   MapPinIcon, 
-  UserIcon 
-} from '@heroicons/react/24/outline';
+} 
+from '@heroicons/react/24/outline';
+
+// Helper to format venue display without repeating city when venue name already contains it
+const formatVenue = (venue) => {
+  if (!venue) return '';
+  const name = (venue.name || '').trim();
+  const city = (venue.address?.city || '').trim();
+  if (!name) return city || '';
+  if (!city) return name;
+  const lname = name.toLowerCase();
+  const lcity = city.toLowerCase();
+  if (lname.includes(lcity) || lcity.includes(lname)) return name;
+  return `${name}, ${city}`;
+};
 
 const FeaturedEvents = () => {
   const [events, setEvents] = useState([]);
@@ -135,7 +148,7 @@ const FeaturedEvents = () => {
                 </div>
                 <div className="absolute top-4 right-4">
                   <span className="bg-gray-800 text-white px-3 py-1 rounded-full text-sm font-medium">
-                    ₹{event.ticketTypes?.[0]?.price || 0}
+                    ₹{(Number(event.ticketTypes?.[0]?.price) || 0).toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -161,15 +174,11 @@ const FeaturedEvents = () => {
                   </div>
                   <div className="flex items-center text-sm text-gray-600">
                     <MapPinIcon className="h-4 w-4 mr-2" />
-                    {event.venue?.name}, {event.venue?.address?.city}
+                    {formatVenue(event.venue)}
                   </div>
                 </div>
                 
-                {/* Attendees */}
-                <div className="flex items-center text-sm text-gray-500 mb-4">
-                  <UserIcon className="h-4 w-4 mr-2" />
-                  {event.totalTicketsSold || 0} attending
-                </div>
+                {/* Attendees removed from featured card; visible on event details only */}
                 
                 {/* View Details Button */}
                 <Link
