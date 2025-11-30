@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { authAPI } from '../services/api';
+import { authAPI, notificationsAPI } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -67,6 +67,24 @@ export const AuthProvider = ({ children }) => {
               user: response.data.user,
             },
           });
+          // After login, fetch notifications and alert user if there are booking cancellations
+          try {
+            const notifRes = await notificationsAPI.getNotifications();
+            const notifs = notifRes.data.notifications || [];
+            const unreadCancelled = notifs.filter(n => !n.read && n.type === 'booking_cancelled');
+            for (const n of unreadCancelled) {
+              try {
+                // Show alert to the user about cancellation and refund timeframe
+                window.alert(`${n.title}: ${n.message} Refund will be processed within 5-7 working days.`);
+                // mark as read
+                await notificationsAPI.markAsRead(n._id);
+              } catch (e) {
+                console.error('Notification alert/mark failed', e);
+              }
+            }
+          } catch (e) {
+            // ignore notification fetch errors
+          }
         } catch (error) {
           dispatch({ type: 'LOGOUT' });
         }
@@ -85,7 +103,24 @@ export const AuthProvider = ({ children }) => {
         type: 'LOGIN_SUCCESS',
         payload: response.data,
       });
-      return { success: true };
+      // Fetch notifications and alert user for booking cancellations
+      try {
+        const notifRes = await notificationsAPI.getNotifications();
+        const notifs = notifRes.data.notifications || [];
+        const unreadCancelled = notifs.filter(n => !n.read && n.type === 'booking_cancelled');
+        for (const n of unreadCancelled) {
+          try {
+            window.alert(`${n.title}: ${n.message} Refund will be processed within 5-7 working days.`);
+            await notificationsAPI.markAsRead(n._id);
+          } catch (e) {
+            console.error('Notification alert/mark failed', e);
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+      // Return the authenticated user so callers can act immediately (avoid localStorage race)
+      return { success: true, user: response.data.user };
     } catch (error) {
       return {
         success: false,
@@ -99,9 +134,13 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.register(userData);
       return { success: true, data: response.data };
     } catch (error) {
+      // Log full server response to help diagnose 400 errors in deployed environment
+      console.error('AuthContext.register error response:', error.response);
       return {
         success: false,
         message: error.response?.data?.message || 'Registration failed',
+        error: error.response?.data || null,
+        status: error.response?.status || null,
       };
     }
   };
