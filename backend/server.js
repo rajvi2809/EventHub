@@ -29,7 +29,7 @@ app.use(
   cors({
     origin: [
     "http://localhost:3000",              
-    "https://eventhub-backend-k9ir.onrender.com/api"  
+    "https://event-hub-olive.vercel.app"  
   ],
     // origin: process.env.FRONTEND_URL || "http://localhost:3000",
     credentials: true,
