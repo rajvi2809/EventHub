@@ -6,7 +6,7 @@ services:
     branch: main
     rootDir: backend
     dockerfilePath: backend/Dockerfile
-    plan: starter
+    plan: free
     autoDeploy: true
 
     envVars:
