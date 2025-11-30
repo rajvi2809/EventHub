@@ -91,6 +91,19 @@ const EventDetails = () => {
 
     const selectedTicketTypeObj = event.ticketTypes.find(t => t._id === selectedTicketType);
     
+    // Helper to format venue without repeating city
+    const formatVenue = (venue) => {
+      if (!venue) return '';
+      const name = (venue.name || '').trim();
+      const city = (venue.address?.city || '').trim();
+      if (!name) return city || '';
+      if (!city) return name;
+      const lname = name.toLowerCase();
+      const lcity = city.toLowerCase();
+      if (lname.includes(lcity) || lcity.includes(lname)) return name;
+      return `${name}, ${city}`;
+    };
+
     // Navigate to payment page with event and ticket details
     navigate('/payment', {
       state: {
@@ -99,7 +112,7 @@ const EventDetails = () => {
           title: event.title,
           image: event.images?.[0]?.url,
           date: formatDate(event.startDate),
-          venue: `${event.venue?.name}, ${event.venue?.address?.city}`,
+          venue: formatVenue(event.venue),
           ticketTypeId: selectedTicketType,
           ticketPrice: selectedTicketTypeObj.price
         },
