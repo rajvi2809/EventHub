@@ -1,0 +1,39 @@
+services:
+  - type: web_service
+    name: eventhub-backend
+    env: docker
+    repo: https://your-repo-url
+    branch: main
+    rootDir: backend
+    dockerfilePath: backend/Dockerfile
+    plan: starter
+    autoDeploy: true
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      - key: PORT
+        value: 5000
+
+      - key: MONGO_URI
+        sync: false
+
+      - key: JWT_SECRET
+        sync: false
+
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
