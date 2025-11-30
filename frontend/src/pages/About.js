@@ -13,7 +13,7 @@ const About = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Hero */}
         <section className="text-center mb-10">
-          <h1 className="text-5xl font-extrabold text-gray-900 mb-4">About EventHub</h1>
+          <h1 className="text-5xl font-extrabold text-gray-900 mb-4">About <span className="inline-block"><span className="text-blue-600">Event</span><span className="text-purple-600">Hub</span></span></h1>
           <p className="mx-auto max-w-4xl text-lg text-gray-600">
             We're on a mission to transform how people discover, attend, and create events.
             From intimate gatherings to large‑scale festivals, EventHub makes every event extraordinary.
@@ -106,5 +106,3 @@ const About = () => {
 };
 
 export default About;
-
-

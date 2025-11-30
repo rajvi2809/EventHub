@@ -165,7 +165,21 @@ export const bookingsAPI = {
     try { localStorage.removeItem('event'); } catch (e) {}
     return response;
   },
-  getEventBookings: (eventId) => api.get(`/bookings/event/${eventId}`),
+  requestCancellation: (id, data = {}) => {
+    const response = api.post(`/bookings/${id}/request-cancel`, data);
+    clearCacheByPattern('/events');
+    try { localStorage.removeItem('eventsList'); } catch (e) {}
+    try { localStorage.removeItem('event'); } catch (e) {}
+    return response;
+  },
+  rejectCancellation: (id, data = {}) => {
+    const response = api.put(`/bookings/${id}/reject-request`, data);
+    clearCacheByPattern('/events');
+    try { localStorage.removeItem('eventsList'); } catch (e) {}
+    try { localStorage.removeItem('event'); } catch (e) {}
+    return response;
+  },
+  getEventBookings: (eventId, params = {}) => api.get(`/bookings/event/${eventId}`, { params }),
 };
 
 // Reviews API
@@ -201,6 +215,7 @@ export const reviewsAPI = {
     api.post(`/reviews/${reviewId}/report`, reportData),
 };
 
+
 export default api;
 
 // Users API (admin helpers)
@@ -209,4 +224,10 @@ export const usersAPI = {
   getUser: (id) => api.get(`/auth/users/${id}`),
   updateUser: (id, data) => api.put(`/auth/users/${id}`, data),
   deleteUser: (id) => api.delete(`/auth/users/${id}`),
+};
+
+// Notifications API
+export const notificationsAPI = {
+  getNotifications: (params = {}) => api.get('/notifications', { params }),
+  markAsRead: (id) => api.put(`/notifications/${id}/read`),
 };

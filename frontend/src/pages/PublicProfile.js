@@ -29,12 +29,26 @@ const PublicProfile = () => {
         const response = await api.get(`/users/${id}/profile`);
         setOrganizer(response.data.user);
         
-        // If user is an organizer, load their events
+        // If user is an organizer, load their events. Try published first,
+        // then fall back to loading all events if none found (helps when events use different status values).
         if (response.data.user.role === 'organizer') {
-          const eventsResponse = await api.get(`/users/${id}/events`, {
+          // Try published events first
+          let eventsResponse = await api.get(`/users/${id}/events`, {
             params: { status: 'published' }
           });
-          setEvents(eventsResponse.data.events || []);
+          let fetched = eventsResponse.data.events || [];
+
+          // If nothing returned, try fetching without status filter (may include drafts/other statuses)
+          if (fetched.length === 0) {
+            try {
+              eventsResponse = await api.get(`/users/${id}/events`);
+              fetched = eventsResponse.data.events || [];
+            } catch (e) {
+              // ignore fallback errors
+            }
+          }
+
+          setEvents(fetched);
         }
       } catch (error) {
         console.error('Error loading profile:', error);

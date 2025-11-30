@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
-import { bookingsAPI } from '../services/api';
+import { bookingsAPI, eventsAPI, clearCacheByPattern } from '../services/api';
 
 const BookingConfirmation = () => {
   const location = useLocation();
   const { booking, event } = location.state || {};
   const [fullBooking, setFullBooking] = useState(booking || null);
+  const eventId = event?._id || (booking && booking.event && booking.event._id) || null;
 
   useEffect(() => {
     // If we only have a minimal booking object, fetch full booking details from backend
@@ -16,7 +17,18 @@ const BookingConfirmation = () => {
           const res = await bookingsAPI.getBooking(booking._id);
           setFullBooking(res.data.booking || booking);
           // Clear cached event lists so counts (attendees) refresh across the app
-          try { localStorage.removeItem('eventsList'); } catch (e) {}
+          try {
+            clearCacheByPattern('/events');
+            localStorage.removeItem('eventsList'); 
+            localStorage.removeItem('event');
+          } catch (e) {}
+          // Also fetch the latest event data so UI shows updated ticket counts
+          try {
+            const _id = (res.data.booking && res.data.booking.event && res.data.booking.event._id) || eventId;
+            if (_id) {
+              await eventsAPI.getEvent(_id);
+            }
+          } catch (e) { /* ignore fetch errors */ }
         }
       } catch (err) {
         // ignore, use whatever we have
@@ -24,7 +36,7 @@ const BookingConfirmation = () => {
       }
     };
     loadBooking();
-  }, [booking]);
+  }, [booking, eventId]);
 
   if (!booking || !event) {
     return (

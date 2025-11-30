@@ -1,21 +1,21 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { reviewsAPI, bookingsAPI } from "../services/api";
-import { useAuth } from "../context/AuthContext";
-import { StarIcon } from "@heroicons/react/24/solid";
-import { StarIcon as StarOutlineIcon } from "@heroicons/react/24/outline";
-import { UserIcon } from "@heroicons/react/24/outline";
+import React, { useState, useEffect, useCallback } from 'react';
+import { reviewsAPI, bookingsAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { StarIcon } from '@heroicons/react/24/solid';
+import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
+import { UserIcon } from '@heroicons/react/24/outline';
 
 const Reviews = ({ eventId }) => {
   const { isAuthenticated, user } = useAuth();
   const [reviews, setReviews] = useState([]);
   const [userReview, setUserReview] = useState(null);
   const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState("");
-  const [title, setTitle] = useState("");
+  const [comment, setComment] = useState('');
+  const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [distribution, setDistribution] = useState([]);
-  const [sort, setSort] = useState("newest");
+  const [sort, setSort] = useState('newest');
 
   const loadReviews = useCallback(async () => {
     try {
@@ -26,19 +26,17 @@ const Reviews = ({ eventId }) => {
 
       // Find user's review if they're authenticated
       if (isAuthenticated && user) {
-        const userReview = response.data.reviews.find(
-          (r) => r.user._id === user._id
-        );
+        const userReview = response.data.reviews.find(r => r.user._id === user._id);
         if (userReview) {
           setUserReview(userReview);
           setRating(userReview.rating);
           setComment(userReview.comment);
-          setTitle(userReview.title || "");
+          setTitle(userReview.title || '');
         }
       }
     } catch (err) {
-      console.error("Error loading reviews:", err);
-      setError("Failed to load reviews");
+      console.error('Error loading reviews:', err);
+      setError('Failed to load reviews');
     } finally {
       setLoading(false);
     }
@@ -53,13 +51,9 @@ const Reviews = ({ eventId }) => {
     try {
       // Need to provide bookingId (user must have a confirmed booking for this event)
       const bookingsRes = await bookingsAPI.getUserBookings();
-      const myBooking = (bookingsRes.data.bookings || []).find(
-        (b) => b.event?._id === eventId && b.status === "confirmed"
-      );
+      const myBooking = (bookingsRes.data.bookings || []).find(b => b.event?._id === eventId && b.status === 'confirmed');
       if (!myBooking) {
-        setError(
-          "You must have a confirmed booking for this event to submit a review"
-        );
+        setError('You must have a confirmed booking for this event to submit a review');
         return;
       }
 
@@ -84,10 +78,10 @@ const Reviews = ({ eventId }) => {
       }
 
       await loadReviews();
-      setError("");
+      setError('');
     } catch (err) {
-      console.error("Error submitting review:", err);
-      setError(err.response?.data?.message || "Failed to submit review");
+      console.error('Error submitting review:', err);
+      setError(err.response?.data?.message || 'Failed to submit review');
     }
   };
 
@@ -96,29 +90,27 @@ const Reviews = ({ eventId }) => {
       await reviewsAPI.voteReview(reviewId, { helpful });
       await loadReviews();
     } catch (err) {
-      console.error("Error voting on review:", err);
+      console.error('Error voting on review:', err);
     }
   };
 
   const handleReport = async (reviewId) => {
     try {
-      await reviewsAPI.reportReview(reviewId, { reason: "inappropriate" });
+      await reviewsAPI.reportReview(reviewId, { reason: 'inappropriate' });
       await loadReviews();
     } catch (err) {
-      console.error("Error reporting review:", err);
+      console.error('Error reporting review:', err);
     }
   };
 
   if (loading) {
-    return (
-      <div className="animate-pulse">
-        <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-        <div className="space-y-3">
-          <div className="h-20 bg-gray-200 rounded"></div>
-          <div className="h-20 bg-gray-200 rounded"></div>
-        </div>
+    return <div className="animate-pulse">
+      <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+      <div className="space-y-3">
+        <div className="h-20 bg-gray-200 rounded"></div>
+        <div className="h-20 bg-gray-200 rounded"></div>
       </div>
-    );
+    </div>;
   }
 
   return (
@@ -131,33 +123,27 @@ const Reviews = ({ eventId }) => {
           <div>
             <div className="text-4xl font-bold text-gray-900 mb-2">
               {reviews.length > 0
-                ? (
-                    reviews.reduce((sum, r) => sum + r.rating, 0) /
-                    reviews.length
-                  ).toFixed(1)
-                : "No"}
+                ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+                : 'No'}
               <span className="text-xl font-normal text-gray-600 ml-2">
                 out of 5
               </span>
             </div>
             <div className="text-gray-600 mb-4">
-              {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
+              {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
             </div>
           </div>
-
+          
           <div className="space-y-2">
-            {[5, 4, 3, 2, 1].map((stars) => {
-              const count =
-                distribution.find((d) => d._id === stars)?.count || 0;
-              const percentage = reviews.length
-                ? (count / reviews.length) * 100
-                : 0;
-
+            {[5, 4, 3, 2, 1].map(stars => {
+              const count = distribution.find(d => d._id === stars)?.count || 0;
+              const percentage = reviews.length ? (count / reviews.length) * 100 : 0;
+              
               return (
                 <div key={stars} className="flex items-center">
                   <div className="text-sm text-gray-600 w-8">{stars}</div>
                   <div className="mx-2 flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
+                    <div 
                       className="h-full bg-yellow-400 rounded-full"
                       style={{ width: `${percentage}%` }}
                     ></div>
@@ -171,13 +157,10 @@ const Reviews = ({ eventId }) => {
       </div>
 
       {/* Review Form - Only show for attendees, not organizers or admins */}
-      {isAuthenticated && user?.role === "attendee" && (
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-lg p-6 shadow-sm mb-6"
-        >
+      {isAuthenticated && user?.role === 'attendee' && (
+        <form onSubmit={handleSubmit} className="bg-white rounded-lg p-6 shadow-sm mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            {userReview ? "Update Your Review" : "Write a Review"}
+            {userReview ? 'Update Your Review' : 'Write a Review'}
           </h3>
 
           {error && (
@@ -241,7 +224,7 @@ const Reviews = ({ eventId }) => {
             type="submit"
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
-            {userReview ? "Update Review" : "Submit Review"}
+            {userReview ? 'Update Review' : 'Submit Review'}
           </button>
         </form>
       )}
@@ -249,7 +232,7 @@ const Reviews = ({ eventId }) => {
       {/* Sort Options */}
       <div className="flex justify-between items-center mb-4">
         <div className="text-sm text-gray-600">
-          {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
+          {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
         </div>
         <select
           value={sort}
@@ -296,8 +279,8 @@ const Reviews = ({ eventId }) => {
                     key={index}
                     className={`h-5 w-5 ${
                       index < review.rating
-                        ? "text-yellow-400"
-                        : "text-gray-300"
+                        ? 'text-yellow-400'
+                        : 'text-gray-300'
                     }`}
                   />
                 ))}
@@ -307,7 +290,7 @@ const Reviews = ({ eventId }) => {
             {review.title && (
               <h4 className="font-medium text-gray-900 mt-4">{review.title}</h4>
             )}
-
+            
             <p className="text-gray-600 mt-2">{review.comment}</p>
 
             {/* Actions */}

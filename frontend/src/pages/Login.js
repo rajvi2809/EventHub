@@ -67,7 +67,7 @@ const Login = () => {
             <img 
               src="/EventHub_Logo.png" 
               alt="EventHub Logo" 
-              className="h-16 w-16 object-contain mr-3"
+              className="h-16 w-16 object-contain mr-2"
             />
             <h1 className="text-3xl font-bold">
               <span className="text-blue-600">Event</span>
@@ -188,4 +188,3 @@ const Login = () => {
 };
  
 export default Login;
-
