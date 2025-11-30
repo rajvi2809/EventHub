@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
+import api, { clearCacheByPattern } from '../services/api';
 
 const PaymentPage = () => {
   const location = useLocation();
@@ -118,6 +118,13 @@ const PaymentPage = () => {
             });
 
             if (verifyResponse.data.success) {
+                  // Clear cached event data so tickets/attending counts refresh
+                  try {
+                    clearCacheByPattern('/events');
+                    localStorage.removeItem('eventsList');
+                    localStorage.removeItem('event');
+                  } catch (e) { /* ignore */ }
+
               navigate('/booking-confirmation', {
                 state: {
                   booking: verifyResponse.data.booking,

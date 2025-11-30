@@ -566,12 +566,25 @@ const Register = () => {
     setError('');
 
     // Client-side validation
+
+    const nameRegex = /^[A-Za-z]+$/; 
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
       setError('Please fill in all required fields');
       setLoading(false);
       return;
     }
+    if (!nameRegex.test(formData.firstName)) {
+      setError('First name should contain letters only');
+      setLoading(false);
+      return;
+    }
 
+    // Last name validation
+    if (!nameRegex.test(formData.lastName)) {
+      setError('Last name should contain letters only');
+      setLoading(false);
+      return;
+    }
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
@@ -680,7 +693,7 @@ const Register = () => {
             <img 
               src="/EventHub_Logo.png" 
               alt="EventHub Logo" 
-              className="h-16 w-16 object-contain mr-3"
+              className="h-16 w-16 object-contain mr-2"
             />
             <h1 className="text-3xl font-bold">
               <span className="text-blue-600">Event</span>

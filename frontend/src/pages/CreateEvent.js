@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Footer from '../components/Footer';
 import { eventsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -31,6 +31,9 @@ const CreateEvent = () => {
     capacity: '',
     venueType: 'physical', // NEW FIELD
   });
+
+  const { id: eventId } = useParams();
+  const [isEditMode, setIsEditMode] = useState(false);
   
 
   useEffect(() => {
@@ -44,6 +47,48 @@ const CreateEvent = () => {
     };
     loadCategories();
   }, []);
+
+  // If eventId present, fetch event and prefill form for editing
+  useEffect(() => {
+    let mounted = true;
+    const loadEvent = async () => {
+      if (!eventId) return;
+      try {
+        const res = await eventsAPI.getEvent(eventId);
+        const evt = res.data.event;
+        if (!evt || !mounted) return;
+
+        // parse ISO startDate into date and time inputs
+        const startDate = evt.startDate ? new Date(evt.startDate) : null;
+        const dateVal = startDate
+          ? startDate.toISOString().slice(0, 10) // yyyy-mm-dd
+          : '';
+        const timeVal = startDate
+          ? startDate.toTimeString().slice(0,5) // HH:MM
+          : '';
+
+        const ticket = (evt.ticketTypes && evt.ticketTypes[0]) || {};
+
+        setForm({
+          imageFile: null,
+          title: evt.title || '',
+          description: evt.description || '',
+          category: evt.category || '',
+          date: dateVal,
+          time: timeVal,
+          location: evt.venue?.name || evt.venue?.address?.city || '',
+          price: ticket.price != null ? String(ticket.price) : '0',
+          capacity: ticket.quantity != null ? String(ticket.quantity) : evt.capacity || '',
+          venueType: evt.venue?.type || 'physical',
+        });
+        setIsEditMode(true);
+      } catch (err) {
+        // ignore — event not found or unauthorized
+      }
+    };
+    loadEvent();
+    return () => { mounted = false; };
+  }, [eventId]);
 
   const canSubmit = useMemo(() => {
     return (
@@ -170,8 +215,15 @@ const CreateEvent = () => {
         ];
       }
 
-      await eventsAPI.createEvent(payload);
-      setSuccess('Event created successfully!');
+      if (isEditMode && eventId) {
+        await eventsAPI.updateEvent(eventId, payload);
+        setSuccess('Event updated successfully!');
+        // Redirect to event details after update
+        navigate(`/events/${eventId}`);
+      } else {
+        await eventsAPI.createEvent(payload);
+        setSuccess('Event created successfully!');
+      }
       // Reset minimal fields
       setForm((prev) => ({
         ...prev,
@@ -367,7 +419,7 @@ const CreateEvent = () => {
                 disabled={submitting || !canSubmit}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 hover:scale-105 disabled:bg-gray-400 disabled:hover:scale-100 text-white py-3 rounded-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl disabled:shadow-none"
               >
-                {submitting ? 'Creating...' : 'Create Event'}
+                {submitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Event' : 'Create Event')}
               </button>
               <a
                 href="/events"
@@ -385,5 +437,3 @@ const CreateEvent = () => {
 };
 
 export default CreateEvent;
-
-

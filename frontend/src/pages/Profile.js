@@ -117,17 +117,15 @@ const Profile = () => {
       try {
         if (user.role === 'organizer') {
           const eventsRes = await eventsAPI.getOrganizerEvents();
-          // Check if component is still mounted before updating state
           if (isMounted) {
             setCreatedEvents(eventsRes.data.events || []);
-            setBookings([]); // Clear bookings for organizers
+            setBookings([]);
           }
         } else {
           const bookingsRes = await bookingsAPI.getUserBookings();
-          // Check if component is still mounted before updating state
           if (isMounted) {
             setBookings(bookingsRes.data.bookings || []);
-            setCreatedEvents([]); // Clear events for attendees
+            setCreatedEvents([]);
           }
         }
       } catch (error) {
@@ -149,6 +147,19 @@ const Profile = () => {
       isMounted = false;
     };
   }, [isAuthenticated, user]); // Only depend on user object and auth state
+
+  const requestCancellation = async (bookingId) => {
+    if (!window.confirm('Send cancellation request to the organizer?')) return;
+    try {
+      await bookingsAPI.requestCancellation(bookingId);
+      // update local state to reflect request
+      setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, status: 'cancellation_requested' } : b));
+      alert('Cancellation request sent');
+    } catch (err) {
+      console.error('Request cancellation failed', err);
+      alert(err.response?.data?.message || 'Failed to request cancellation');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -178,10 +189,7 @@ const Profile = () => {
         {/* Tabs */}
         <div className="bg-white rounded-2xl border border-gray-100 p-2 mb-6 flex">
           {user?.role !== 'organizer' && (
-            <>
-              <TabButton active={activeTab === 'tickets'} onClick={() => setActiveTab('tickets')}>My Tickets</TabButton>
-              <TabButton active={activeTab === 'favorites'} onClick={() => setActiveTab('favorites')}>Favorites</TabButton>
-            </>
+            <TabButton active={activeTab === 'tickets'} onClick={() => setActiveTab('tickets')}>My Tickets</TabButton>
           )}
           {user?.role === 'organizer' && (
             <TabButton active={activeTab === 'created'} onClick={() => setActiveTab('created')}>Created Events</TabButton>
@@ -216,6 +224,15 @@ const Profile = () => {
                   <div className="flex items-center gap-3">
                     <button onClick={() => downloadTicket(b)} className="px-4 py-2 bg-green-600 text-white rounded-lg">Download Ticket</button>
                     <Link to={`/events/${b.event?._id}`} className="px-4 py-2 bg-blue-600 text-white rounded-lg">View Event</Link>
+                    {b.status === 'confirmed' && (
+                      <button onClick={() => requestCancellation(b._id)} className="px-4 py-2 bg-yellow-500 text-white rounded-lg">Request Cancellation</button>
+                    )}
+                    {b.status === 'cancellation_requested' && (
+                      <div className="px-3 py-2 rounded-lg bg-gray-100 text-sm text-gray-700">Cancellation Requested</div>
+                    )}
+                    {b.status === 'cancelled' && (
+                      <div className="px-3 py-2 rounded-lg bg-red-100 text-sm text-red-700">Cancelled</div>
+                    )}
                   </div>
                 </div>
               ))
@@ -223,12 +240,6 @@ const Profile = () => {
           </section>
         )}
 
-        {activeTab === 'favorites' && (
-          <section className="bg-white rounded-2xl shadow p-10 text-center">
-            <div className="text-gray-600">Favorites feature is not enabled yet.</div>
-            <Link to="/events" className="inline-block mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg">Explore Events</Link>
-          </section>
-        )}
 
         {activeTab === 'created' && (
           <section className="space-y-4">
@@ -262,5 +273,3 @@ const Profile = () => {
 };
 
 export default Profile;
-
-
