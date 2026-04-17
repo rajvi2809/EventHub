@@ -8,8 +8,8 @@ const getEvents = async (req, res) => {
   try {
     // Ensure events that have ended are marked as completed
     await Event.updateMany(
-      { endDate: { $lte: new Date() }, status: 'published' },
-      { $set: { status: 'completed' } }
+      { endDate: { $lte: new Date() }, status: "published" },
+      { $set: { status: "completed" } },
     );
     const {
       page = 1,
@@ -20,11 +20,18 @@ const getEvents = async (req, res) => {
       endDate,
       search,
       sort = "-createdAt",
-      status = "published",
+      status,
     } = req.query;
 
     // Build query
-    const query = { status };
+    const query = {};
+
+    // By default include live + recently ended events for public listing
+    if (status && status !== "all") {
+      query.status = status;
+    } else {
+      query.status = { $in: ["published", "completed"] };
+    }
 
     // Category filter
     if (category) {
@@ -56,7 +63,9 @@ const getEvents = async (req, res) => {
     const events = await Event.find(query)
       .populate("organizer", "firstName lastName avatar")
       // include status so frontend can render the correct status instead of defaulting to the first <option>
-      .select("title description startDate endDate venue category ticketTypes analytics images status organizer")
+      .select(
+        "title description startDate endDate venue category ticketTypes analytics images status organizer",
+      )
       .sort(sort)
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -68,8 +77,19 @@ const getEvents = async (req, res) => {
     // Add computed fields safely (guard against missing ticketTypes)
     const eventsWithDetails = events.map((event) => {
       const types = Array.isArray(event.ticketTypes) ? event.ticketTypes : [];
-      const totalTicketsSold = types.reduce((sum, ticket) => sum + (Number(ticket?.sold) || 0), 0);
-      const availableTickets = types.reduce((sum, ticket) => sum + Math.max(0, (Number(ticket?.quantity) || 0) - (Number(ticket?.sold) || 0)), 0);
+      const totalTicketsSold = types.reduce(
+        (sum, ticket) => sum + (Number(ticket?.sold) || 0),
+        0,
+      );
+      const availableTickets = types.reduce(
+        (sum, ticket) =>
+          sum +
+          Math.max(
+            0,
+            (Number(ticket?.quantity) || 0) - (Number(ticket?.sold) || 0),
+          ),
+        0,
+      );
       const prices = types.map((t) => Number(t?.price) || 0);
       return {
         ...event,
@@ -106,7 +126,7 @@ const getEvent = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id).populate(
       "organizer",
-      "firstName lastName avatar bio"
+      "firstName lastName avatar bio",
     );
 
     if (!event) {
@@ -122,8 +142,13 @@ const getEvent = async (req, res) => {
     });
 
     // If event endDate has passed and it's still published, mark completed
-    if (event && event.endDate && new Date(event.endDate) <= new Date() && event.status === 'published') {
-      event.status = 'completed';
+    if (
+      event &&
+      event.endDate &&
+      new Date(event.endDate) <= new Date() &&
+      event.status === "published"
+    ) {
+      event.status = "completed";
       await event.save();
     }
 
@@ -133,7 +158,10 @@ const getEvent = async (req, res) => {
     // Reconcile sold counts from Booking records to ensure counts reflect confirmed bookings
     try {
       // Aggregate bookings for this event that are confirmed / completed payments
-      const bookings = await Booking.find({ event: event._id, status: 'confirmed' }).lean();
+      const bookings = await Booking.find({
+        event: event._id,
+        status: "confirmed",
+      }).lean();
 
       // Build sold map per ticketType id
       const soldMap = {};
@@ -158,9 +186,24 @@ const getEvent = async (req, res) => {
         return tCopy;
       });
 
-      const totalTicketsSold = reconciledTypes.reduce((sum, ticket) => sum + (Number(ticket?.sold) || 0), 0);
-      const availableTickets = reconciledTypes.reduce((sum, ticket) => sum + Math.max(0, (Number(ticket?.quantity) || 0) - (Number(ticket?.sold) || 0)), 0);
-      const totalRevenue = reconciledTypes.reduce((sum, ticket) => sum + (Number(ticket?.price) || 0) * (Number(ticket?.sold) || 0), 0);
+      const totalTicketsSold = reconciledTypes.reduce(
+        (sum, ticket) => sum + (Number(ticket?.sold) || 0),
+        0,
+      );
+      const availableTickets = reconciledTypes.reduce(
+        (sum, ticket) =>
+          sum +
+          Math.max(
+            0,
+            (Number(ticket?.quantity) || 0) - (Number(ticket?.sold) || 0),
+          ),
+        0,
+      );
+      const totalRevenue = reconciledTypes.reduce(
+        (sum, ticket) =>
+          sum + (Number(ticket?.price) || 0) * (Number(ticket?.sold) || 0),
+        0,
+      );
 
       const eventWithDetails = {
         ...eobj,
@@ -176,15 +219,30 @@ const getEvent = async (req, res) => {
       });
       return;
     } catch (reconErr) {
-      console.error('Failed to reconcile booking counts for event:', reconErr);
+      console.error("Failed to reconcile booking counts for event:", reconErr);
       // fallback to using stored ticketTypes.sold values
     }
 
     const eventWithDetails = {
       ...eobj,
-      totalTicketsSold: types.reduce((sum, ticket) => sum + (Number(ticket?.sold) || 0), 0),
-      availableTickets: types.reduce((sum, ticket) => sum + Math.max(0, (Number(ticket?.quantity) || 0) - (Number(ticket?.sold) || 0)), 0),
-      totalRevenue: types.reduce((sum, ticket) => sum + (Number(ticket?.price) || 0) * (Number(ticket?.sold) || 0), 0),
+      totalTicketsSold: types.reduce(
+        (sum, ticket) => sum + (Number(ticket?.sold) || 0),
+        0,
+      ),
+      availableTickets: types.reduce(
+        (sum, ticket) =>
+          sum +
+          Math.max(
+            0,
+            (Number(ticket?.quantity) || 0) - (Number(ticket?.sold) || 0),
+          ),
+        0,
+      ),
+      totalRevenue: types.reduce(
+        (sum, ticket) =>
+          sum + (Number(ticket?.price) || 0) * (Number(ticket?.sold) || 0),
+        0,
+      ),
     };
 
     res.status(200).json({
@@ -294,17 +352,24 @@ const updateEvent = async (req, res) => {
 
     // Notify attendees if event details changed
     try {
-      const bookings = await Booking.find({ 
-        event: req.params.id, 
-        status: "confirmed" 
+      const bookings = await Booking.find({
+        event: req.params.id,
+        status: "confirmed",
       }).populate("user", "email");
 
       // Check if important details changed
       const importantChanges = [];
-      if (req.body.startDate && oldEvent.startDate.toString() !== new Date(req.body.startDate).toString()) {
+      if (
+        req.body.startDate &&
+        oldEvent.startDate.toString() !==
+          new Date(req.body.startDate).toString()
+      ) {
         importantChanges.push("Start date");
       }
-      if (req.body.venue && JSON.stringify(oldEvent.venue) !== JSON.stringify(req.body.venue)) {
+      if (
+        req.body.venue &&
+        JSON.stringify(oldEvent.venue) !== JSON.stringify(req.body.venue)
+      ) {
         importantChanges.push("Venue");
       }
 
@@ -383,8 +448,8 @@ const getOrganizerEvents = async (req, res) => {
   try {
     // Ensure events that have ended are marked as completed for organizers
     await Event.updateMany(
-      { endDate: { $lte: new Date() }, status: 'published' },
-      { $set: { status: 'completed' } }
+      { endDate: { $lte: new Date() }, status: "published" },
+      { $set: { status: "completed" } },
     );
     const { page = 1, limit = 10, status } = req.query;
 
@@ -404,9 +469,24 @@ const getOrganizerEvents = async (req, res) => {
     // Add analytics data safely
     const eventsWithAnalytics = events.map((event) => {
       const types = Array.isArray(event.ticketTypes) ? event.ticketTypes : [];
-      const totalTicketsSold = types.reduce((sum, ticket) => sum + (Number(ticket?.sold) || 0), 0);
-      const totalRevenue = types.reduce((sum, ticket) => sum + (Number(ticket?.price) || 0) * (Number(ticket?.sold) || 0), 0);
-      const availableTickets = types.reduce((sum, ticket) => sum + Math.max(0, (Number(ticket?.quantity) || 0) - (Number(ticket?.sold) || 0)), 0);
+      const totalTicketsSold = types.reduce(
+        (sum, ticket) => sum + (Number(ticket?.sold) || 0),
+        0,
+      );
+      const totalRevenue = types.reduce(
+        (sum, ticket) =>
+          sum + (Number(ticket?.price) || 0) * (Number(ticket?.sold) || 0),
+        0,
+      );
+      const availableTickets = types.reduce(
+        (sum, ticket) =>
+          sum +
+          Math.max(
+            0,
+            (Number(ticket?.quantity) || 0) - (Number(ticket?.sold) || 0),
+          ),
+        0,
+      );
       return {
         ...event,
         totalTicketsSold,
@@ -568,11 +648,11 @@ const getEventAnalytics = async (req, res) => {
         totalBookings: bookings.length,
         totalRevenue: bookings.reduce(
           (sum, booking) => sum + booking.finalAmount,
-          0
+          0,
         ),
         totalTicketsSold: bookings.reduce(
           (sum, booking) => sum + booking.totalTickets,
-          0
+          0,
         ),
       },
       ticketSales: event.ticketTypes.map((ticket) => ({
